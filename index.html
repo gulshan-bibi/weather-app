@@ -4,29 +4,57 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Weather App - Ghulshan Bibi</title>
-<link rel="stylesheet" href="style.css">
+<style>
+body{font-family:Arial;background:linear-gradient(to right,#2196F3,#00BCD4);display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0}
+.box{background:white;padding:25px;border-radius:12px;width:340px;text-align:center;box-shadow:0 8px 20px rgba(0,0,0,.3)}
+input{padding:10px;width:60%;border:1px solid #ccc;border-radius:5px}
+button{padding:10px 15px;background:#2196F3;color:white;border:none;border-radius:5px;cursor:pointer;margin-left:5px}
+.card{margin-top:15px;background:#e3f2fd;padding:15px;border-radius:8px}
+.hidden{display:none}
+#error{color:red}
+</style>
 </head>
 <body>
-<div class="container">
-<h1>🌤️ Weather App</h1>
-<div class="search-box">
-<input type="text" id="cityInput" placeholder="Enter city name (e.g., Lahore)">
+<div class="box">
+<h2>🌤️ Weather App</h2>
+<input id="cityInput" placeholder="Lahore">
 <button id="searchBtn">Search</button>
-</div>
 <div id="weatherCard" class="card hidden">
-<img id="weatherIcon" src="" alt="">
-<h2 id="cityName"></h2>
-<h3 id="temp"></h3>
+<h3 id="cityName"></h3>
+<h1 id="temp"></h1>
 <p id="condition"></p>
-<div class="details">
-<p>💧 Humidity: <span id="humidity"></span></p>
-<p>💨 Wind: <span id="wind"></span></p>
-<p>🌡️ Feels Like: <span id="feelsLike"></span></p>
+<p>Humidity: <span id="humidity"></span></p>
+<p>Wind: <span id="wind"></span></p>
+<p>Feels: <span id="feelsLike"></span></p>
 </div>
+<p id="error"></p>
+<small>Made by Ghulshan Bibi | ID:198 | Task 11</small>
 </div>
-<p id="error" class="error"></p>
-<p class="footer">Made by Ghulshan Bibi | ID: 198 | Task 11</p>
-</div>
-<script src="script.js"></script>
+<script>
+document.getElementById("searchBtn").addEventListener("click",getWeather);
+document.getElementById("cityInput").addEventListener("keypress",e=>{if(e.key==="Enter")getWeather()});
+async function getWeather(){
+let city=document.getElementById("cityInput").value.trim();
+if(!city){document.getElementById("error").innerText="Enter city";return;}
+document.getElementById("error").innerText="Loading...";
+try{
+let g=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1&language=en&format=json`);
+let gd=await g.json();
+if(!gd.results)throw new Error("City not found");
+let {latitude,longitude,name,country}=gd.results[0];
+let wR=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m`);
+let wD=await wR.json();
+let w=wD.current;
+document.getElementById("weatherCard").classList.remove("hidden");
+document.getElementById("cityName").innerText=name+", "+country;
+document.getElementById("temp").innerText=Math.round(w.temperature_2m)+"°C";
+document.getElementById("condition").innerText="Weather Code "+w.weather_code;
+document.getElementById("humidity").innerText=w.relative_humidity_2m+"%";
+document.getElementById("wind").innerText=w.wind_speed_10m+" km/h";
+document.getElementById("feelsLike").innerText=Math.round(w.apparent_temperature)+"°C";
+document.getElementById("error").innerText="";
+}catch(e){document.getElementById("error").innerText=e.message;document.getElementById("weatherCard").classList.add("hidden");}
+}
+</script>
 </body>
 </html>
