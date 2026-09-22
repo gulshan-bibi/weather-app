@@ -8,42 +8,24 @@ async function getWeather(){
   const city = cityInput.value.trim();
   if(!city){ document.getElementById("error").innerText="Please enter city name"; return; }
   document.getElementById("error").innerText="Loading...";
-
   try{
-    // 1. City ka latitude/longitude nikalo
     const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1&language=en&format=json`);
     const geoData = await geoRes.json();
     if(!geoData.results || geoData.results.length===0) throw new Error("City not found");
-
     const { latitude, longitude, name, country } = geoData.results[0];
-
-    // 2. Weather nikalo
     const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m`);
     const weatherData = await weatherRes.json();
     const w = weatherData.current;
-
     document.getElementById("weatherCard").classList.remove("hidden");
     document.getElementById("cityName").innerText = name + ", " + country;
     document.getElementById("temp").innerText = Math.round(w.temperature_2m) + "°C";
-    document.getElementById("condition").innerText = getWeatherDesc(w.weather_code);
+    document.getElementById("condition").innerText = w.weather_code===0?"Clear sky":w.weather_code<4?"Partly cloudy":"Cloudy";
     document.getElementById("humidity").innerText = w.relative_humidity_2m + "%";
     document.getElementById("wind").innerText = w.wind_speed_10m + " km/h";
     document.getElementById("feelsLike").innerText = Math.round(w.apparent_temperature) + "°C";
-    document.getElementById("weatherIcon").src = "https://openweathermap.org/img/wn/02d@2x.png";
     document.getElementById("error").innerText = "";
   }catch(err){
     document.getElementById("weatherCard").classList.add("hidden");
     document.getElementById("error").innerText = err.message;
   }
-}
-
-function getWeatherDesc(code){
-  if(code===0) return "Clear sky";
-  if(code===1||code===2||code===3) return "Partly cloudy";
-  if(code===45||code===48) return "Foggy";
-  if(code>=51&&code<=67) return "Rainy";
-  if(code>=71&&code<=77) return "Snowy";
-  if(code>=80&&code<=82) return "Rain showers";
-  if(code>=95) return "Thunderstorm";
-  return "Cloudy";
 }
